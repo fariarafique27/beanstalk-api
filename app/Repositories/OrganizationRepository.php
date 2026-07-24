@@ -31,13 +31,17 @@ class OrganizationRepository extends BaseRepository
 
     public function createOrgAdminUser(Organization $organization, array $data)
     {
-        return User::create([
+        $user = User::create([
             'name'            => $data['name'] . ' Admin',
             'email'           => $data['email'],
-            'password'        => null, // Set via invitation link
+            'password'        => $data['password'] ?? '123456789', // Set via invitation link if not provided
             'organization_id' => $organization->id,
-            'role'            => 'org_admin',
         ]);
+
+        // Assign Spatie Role cleanly
+        $user->assignRole('org_admin');
+
+        return $user;
     }
 
     public function syncPermissions($organizationId, array $permissions)
@@ -78,7 +82,7 @@ class OrganizationRepository extends BaseRepository
 
     public function updatePasswordAndActivate(User $user, string $password)
     {
-        $user->password = Hash::make($password);
+        $user->password = $password; // Auto-hashed via model casts
         $user->password_set_at = now();
         $user->save();
 

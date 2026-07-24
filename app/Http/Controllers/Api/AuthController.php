@@ -16,6 +16,7 @@ class AuthController extends Controller
 
     public function login(LoginUserRequest $request)
     {
+        logger('CONTROLLER LOGIN HIT!', $request->all());
         try {
             return $this->authService->login($request);
         } catch (\Exception $e) {

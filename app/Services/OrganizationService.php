@@ -109,3 +109,5 @@ class OrganizationService extends BaseService
         return $this->successResponse(null, 'Password created successfully! You can now log in.');
     }
 }
+
+

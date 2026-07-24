@@ -3,6 +3,7 @@
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use App\Http\Middleware\CheckPermission;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -15,6 +16,9 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'frontend.auth' => \App\Http\Middleware\EnsureFrontendAuthenticated::class,
         ]);
+        $middleware->alias([
+        'permission' => CheckPermission::class,
+    ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

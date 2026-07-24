@@ -16,6 +16,7 @@ class CreateOrganizationRequest extends FormRequest
         return [
             'name'        => 'required|string|max:255',
             'email'       => 'required|email|unique:users,email',
+            'password'    => 'nullable|string|min:8',
             'permissions' => 'nullable|array',
             'permissions.*' => 'string',
         ];
