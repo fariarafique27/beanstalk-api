@@ -23,6 +23,8 @@ class RoleAndUserSeeder extends Seeder
             'manage_users',
             'manage_roles',
             'view_reports',
+            'org-admins.invite', 
+            'employees.manage',
         ];
 
        // firstOrCreate → Look for a record. If it doesn't exist, create it.
