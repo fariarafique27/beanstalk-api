@@ -6,7 +6,7 @@
     use Illuminate\Support\Facades\Route;
     use App\Http\Controllers\Api\SetPasswordController;
     use Spatie\Permission\Models\Permission;
-
+    use App\Http\Controllers\Api\DashboardController;
 
     // Public Auth Routes
     Route::post('/login', [AuthController::class, 'login']);
@@ -18,8 +18,17 @@
         'data' => Permission::all() // Returns all your 6-7 permissions from the database
             ]);
         });
+        
     // Protected Routes (Require Token)
     Route::middleware('auth:sanctum')->group(function () {
+
+        // Super Admin Dashboard (with your custom permission check)
+        Route::get('/super-admin/dashboard', [DashboardController::class, 'getSuperAdminDashboard'])
+            ->middleware('permission:organization.read');
+
+        // Regular Company / Tenant Dashboard
+        Route::get('/dashboard', [DashboardController::class, 'getDashboard']);
+
         Route::get('/me', [AuthController::class, 'me']);
         Route::post('/logout', [AuthController::class, 'logout']);
 
