@@ -11,7 +11,13 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->bind(AttendanceProviderInterface::class, function ($app) {
+        $driver = config('services.attendance.driver', 'mock');
+
+        return $driver === 'zkteco' 
+            ? $app->make(ZKTecoDeviceAttendanceProvider::class) 
+            : new MockAttendanceProvider();
+    });
     }
 
     /**

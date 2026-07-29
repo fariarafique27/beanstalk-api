@@ -26,6 +26,16 @@ class ResponseUser extends JsonResource
         // 3. Combine both lists (unique values)
         $allPermissions = array_unique(array_merge($spatiePermissions, $orgPermissions));
 
+        logger('RESPONSE USER PERMISSIONS CHECK', [
+        'user_id' => $user->id,
+        'email' => $user->email,
+        'is_root' => $user->is_root,
+        'roles' => $user->getRoleNames(),
+        'spatie_permissions' => $spatiePermissions,
+        'final_permissions' => $allPermissions
+    ]);
+    
+
         return [
             'id'             => $user->id,
             'name'           => $user->name,

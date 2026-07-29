@@ -66,4 +66,6 @@ class OrganizationController extends Controller
             return $this->errorResponse($this->getMessageData('error', 'en')['general_error'], 500);
         }
     }
+
+    
 }
