@@ -10,10 +10,20 @@ use Illuminate\Support\Facades\Hash;
 
 class OrganizationRepository extends BaseRepository
 {
+    // public function getAllOrganizations()
+    // {
+    //     return Organization::with(['permissions', 'users'])->get();
+    // }
+
     public function getAllOrganizations()
     {
-        return Organization::with(['permissions', 'users'])->get();
+        return Organization::with(['permissions', 'users'])->get()->map(function ($org) {
+            // Transform the permissions relation into a collection/array of name strings
+            $org->permissions = $org->permissions->pluck('name')->toArray();
+            return $org;
+        });
     }
+
 
     public function findById($id)
     {

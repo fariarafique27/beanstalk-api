@@ -25,6 +25,7 @@ class RoleAndUserSeeder extends Seeder
             'view_reports',
             'org-admins.invite', 
             'employees.manage',
+            'organization.read'
         ];
 
        // firstOrCreate → Look for a record. If it doesn't exist, create it.
