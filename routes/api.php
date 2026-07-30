@@ -7,6 +7,7 @@
     use App\Http\Controllers\Api\SetPasswordController;
     use Spatie\Permission\Models\Permission;
     use App\Http\Controllers\Api\DashboardController;
+    use App\Http\Controllers\Api\AttendanceController;
 
     // Public Auth Routes
     Route::post('/login', [AuthController::class, 'login']);
@@ -49,6 +50,8 @@ Route::get('/super-admin/dashboard', function (\Illuminate\Http\Request $request
         Route::post('/organizations/{id}/resend-invite', [OrgAdminController::class, 'resendInvite']); // <-- ADDED THIS
 
 
+        Route::get('/attendances', [AttendanceController::class, 'index']);
+        Route::get('/attendances/{id}', [AttendanceController::class, 'show']);
         
         //TODO ::::
         // Organization & Admin Invitation Route (Protected by permission)

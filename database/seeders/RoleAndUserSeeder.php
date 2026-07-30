@@ -18,14 +18,19 @@ class RoleAndUserSeeder extends Seeder
 
 
        //Create an array containing the names of the permissions that you want to add to the system. By itself, this array does not insert anything into the database
-       $permissions = [
+        $permissions = [
             'manage_organizations',
             'manage_users',
             'manage_roles',
             'view_reports',
             'org-admins.invite', 
             'employees.manage',
-            'organization.read'
+            'organization.read',
+            // Attendance CRUD Permissions
+            'attendances.view',
+            'attendances.create',
+            'attendances.update',
+            'attendances.delete',
         ];
 
        // firstOrCreate → Look for a record. If it doesn't exist, create it.

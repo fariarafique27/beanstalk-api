@@ -3,7 +3,9 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
-
+use App\Contracts\AttendanceProviderInterface;
+use App\Services\Attendance\ZKTecoDeviceAttendanceProvider;
+use App\Services\Attendance\MockAttendanceProvider;
 class AppServiceProvider extends ServiceProvider
 {
     /**

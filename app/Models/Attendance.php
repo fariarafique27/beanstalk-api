@@ -16,4 +16,9 @@ class Attendance extends Model
     {
         return $this->hasMany(AttendanceLog::class);
     }
+
+    public function attendanceLogs(): HasMany
+    {
+        return $this->hasMany(AttendanceLog::class);
+    }
 }
