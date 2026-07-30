@@ -4,21 +4,33 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Attendance extends Model
 {
     use SoftDeletes;
 
-    protected $guarded = ['id'];
+    protected $fillable = [
+        'employee_id',
+        'organization_id',
+        'attendance_date',
+        'total_minutes',
+        'status',
+        'remarks',
+        'user_name',
+    ];
 
-    public function logs(): HasMany
+    protected $casts = [
+        'attendance_date' => 'date',
+    ];
+
+    public function logs()
     {
-        return $this->hasMany(AttendanceLog::class);
+        return $this->hasMany(AttendanceLog::class)
+            ->orderByRaw('COALESCE(check_in_time, check_out_time) ASC');
     }
 
-    public function attendanceLogs(): HasMany
+    public function employee()
     {
-        return $this->hasMany(AttendanceLog::class);
+        return $this->belongsTo(ZktecoUser::class, 'employee_id');
     }
 }

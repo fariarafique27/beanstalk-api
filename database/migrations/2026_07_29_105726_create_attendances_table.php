@@ -7,22 +7,21 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration {
     public function up(): void
     {
+        // attendances
         Schema::create('attendances', function (Blueprint $table) {
             $table->id();
-            // $table->foreignId('employee_id')->constrained('employees')->onDelete('cascade');
-            // $table->foreignId('organization_id')->constrained('organizations')->onDelete('cascade');
-            $table->unsignedBigInteger('employee_id');
-            $table->unsignedBigInteger('organization_id');
+            $table->foreignId('employee_id')->constrained('zkteco_users')->cascadeOnDelete();
+            $table->unsignedBigInteger('organization_id')->nullable();
             $table->date('attendance_date');
-            $table->integer('total_minutes')->nullable()->comment('total worked minutes across all sessions');
-            $table->enum('status', ['present', 'absent', 'half_day', 'late'])->default('present');
+            $table->integer('total_minutes')->default(0);
+            $table->string('status')->default('Present');
             $table->text('remarks')->nullable();
+            $table->string('user_name')->nullable();
             $table->timestamps();
             $table->softDeletes();
 
-            // Indexes for fast searching and filtering
-            $table->index(['employee_id', 'attendance_date']);
-            $table->index('organization_id');
+            $table->unique(['employee_id', 'attendance_date'], 'attendances_employee_date_unique');
+            $table->index('attendance_date');
         });
     }
 

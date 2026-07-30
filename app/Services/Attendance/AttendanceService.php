@@ -41,6 +41,7 @@ class AttendanceService extends BaseService
     {
         $paginatedLogs = $this->attendanceRepository->fetchEmployeeHistory($request, $id);
 
+        logger('[SERVICE] paginatedLogs to be returned', ['data' => $paginatedLogs->items()]);
         return response()->json([
             'success' => true,
             'data' => $paginatedLogs

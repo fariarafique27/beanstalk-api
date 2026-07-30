@@ -3,47 +3,61 @@ namespace App\Repositories;
 
 use App\Models\Attendance;
 use Illuminate\Http\Request;
+use App\Models\ZktecoUser;
 
 class AttendanceRepository
 {
     public function fetchTodayAttendances(Request $request)
-    {
-        $today = now()->toDateString(); // '2026-07-29'
+{
+    $today = now()->toDateString();
 
-        // Get all unique employees/users who have attendance records in the system
-        $uniqueEmployees = Attendance::select('employee_id', 'user_name')
-            ->distinct()
-            ->get();
+    // Pull today's attendance sheets with their logs eager-loaded,
+    // keyed by employee_id for fast lookup.
+    $todayAttendances = Attendance::with('logs')
+        ->whereDate('attendance_date', $today)
+        ->get()
+        ->keyBy('employee_id');
 
-        return $uniqueEmployees->map(function ($employee) use ($today) {
-            // Find today's specific record for this employee
-            $todayAttendance = Attendance::where('employee_id', $employee->employee_id)
-                ->whereDate('attendance_date', $today)
-                ->first();
+    // All employees in the system (so absent employees show up too,
+    // not just ones who've ever had an attendance row).
+    $employees = ZktecoUser::select('id', 'name')->get();
 
-            // Fetch check-in/out if logs or attendance columns exist
-            // (Assumes check_in can be pulled from related attendance_logs or attendance columns)
-            $checkIn = '00:00:00';
-            $checkOut = '00:00:00';
-            $status = 'Absent';
+    return $employees->map(function ($employee) use ($todayAttendances) {
+        $attendance = $todayAttendances->get($employee->id);
 
-            if ($todayAttendance) {
-                $status = 'Present';
-                // If you store check_in/out directly on attendance or via relation, map it here:
-                $checkIn = $todayAttendance->check_in ?? '09:00:00'; // Adjust column to your schema if needed
-                $checkOut = $todayAttendance->check_out ?? '00:00:00';
-            }
-
+        if (!$attendance) {
             return [
-                'id' => $todayAttendance->id ?? $employee->employee_id, // Used for the show route
-                'employee_id' => $employee->employee_id,
-                'user_name' => $employee->user_name ?? 'Unknown User',
-                'check_in' => $checkIn,
-                'check_out' => $checkOut,
-                'status' => $status,
+                'id' => $employee->id,
+                'employee_id' => $employee->id,
+                'user_name' => $employee->name,
+                'check_in' => null,
+                'check_out' => null,
+                'status' => 'Absent',
             ];
-        });
-    }
+        }
+
+        // First check-in of the day = earliest log row with check_in_time set
+        $firstCheckIn = $attendance->logs
+            ->whereNotNull('check_in_time')
+            ->sortBy('check_in_time')
+            ->first();
+
+        // Last check-out of the day = latest log row with check_out_time set
+        $lastCheckOut = $attendance->logs
+            ->whereNotNull('check_out_time')
+            ->sortByDesc('check_out_time')
+            ->first();
+
+        return [
+            'id' => $attendance->id,
+            'employee_id' => $employee->id,
+            'user_name' => $employee->name,
+            'check_in' => $firstCheckIn?->check_in_time?->format('H:i:s'),
+            'check_out' => $lastCheckOut?->check_out_time?->format('H:i:s'),
+            'status' => $attendance->status,
+        ];
+    });
+}
 
     // public function fetchEmployeeHistory(Request $request, $id)
     // {
@@ -68,24 +82,62 @@ class AttendanceRepository
     // }
 
     public function fetchEmployeeHistory(Request $request, $id)
-    {
-        // Make sure to eager load 'attendanceLogs' (plural)
-        $query = Attendance::with('attendanceLogs')
-            ->where('employee_id', $id);
+{
+    logger('[REPO] fetchEmployeeHistory called', ['employee_id' => $id, 'params' => $request->all()]);
 
-        if ($request->filled('search')) {
-            $search = $request->input('search');
-            $query->where(function($q) use ($search) {
-                $q->where('status', 'like', "%{$search}%")
-                ->orWhere('attendance_date', 'like', "%{$search}%")
-                ->orWhere('user_name', 'like', "%{$search}%");
-            });
-        }
+    $query = Attendance::with('logs')
+        ->where('employee_id', $id);
 
-        if ($request->filled('status')) {
-            $query->where('status', $request->input('status'));
-        }
-
-        return $query->orderBy('attendance_date', 'desc')->paginate(10);
+    if ($request->filled('search')) {
+        $search = $request->input('search');
+        $query->where(function ($q) use ($search) {
+            $q->where('status', 'like', "%{$search}%")
+              ->orWhere('attendance_date', 'like', "%{$search}%")
+              ->orWhere('user_name', 'like', "%{$search}%");
+        });
     }
+
+    if ($request->filled('status')) {
+        $query->where('status', $request->input('status'));
+    }
+
+    $paginated = $query->orderBy('attendance_date', 'desc')->paginate(10);
+
+    logger('[REPO] raw paginated count', ['total' => $paginated->total()]);
+
+    if ($paginated->count() > 0) {
+        $first = $paginated->first();
+        logger('[REPO] first raw attendance row', [
+            'attendance_id' => $first->id,
+            'employee_id' => $first->employee_id,
+            'logs_count' => $first->logs->count(),
+            'logs_raw' => $first->logs->toArray(),
+        ]);
+    }
+
+    $paginated->getCollection()->transform(function ($attendance) {
+        $firstCheckIn = $attendance->logs->whereNotNull('check_in_time')->sortBy('check_in_time')->first();
+        $lastCheckOut = $attendance->logs->whereNotNull('check_out_time')->sortByDesc('check_out_time')->first();
+
+        $row = [
+            'id' => $attendance->id,
+            'employee_id' => $attendance->employee_id,
+            'user_name' => $attendance->user_name,
+            'attendance_date' => $attendance->attendance_date->format('Y-m-d'),
+            'check_in' => $firstCheckIn?->check_in_time?->format('h:i A'),
+            'check_out' => $lastCheckOut?->check_out_time?->format('h:i A'),
+            'status' => $attendance->status,
+            'remarks' => $attendance->remarks,
+            'total_minutes' => $attendance->total_minutes,
+        ];
+
+        logger('[REPO] transformed row', $row);
+
+        return $row;
+    });
+
+    logger('[REPO] final paginated first item after transform', $paginated->items()[0] ?? []);
+
+    return $paginated;
+}
 }
