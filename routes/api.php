@@ -59,6 +59,10 @@ Route::get('/super-admin/dashboard', function (\Illuminate\Http\Request $request
              Route::post('/org-admins/invite', [OrgAdminController::class, 'storeOrgAdmin']);
         // });
 
+        Route::get('/device', [DeviceController::class, 'show']);
+        Route::post('/device', [DeviceController::class, 'store']);
+        Route::post('/device/sync', [DeviceController::class, 'sync']);
+
         // Employee Management Routes (Permission Protected)
         Route::middleware('permission:employees.manage')->group(function () {
             Route::get('/employees', [EmployeeController::class, 'index']);

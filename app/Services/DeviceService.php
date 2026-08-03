@@ -1,0 +1,51 @@
+<?php
+namespace App\Services;
+
+use App\Jobs\SyncZktecoDeviceJob;
+use App\Repositories\DeviceRepository;
+use App\Http\Responses\DeviceResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+
+class DeviceService extends BaseService
+{
+    public function __construct(protected DeviceRepository $deviceRepository) {}
+
+   public function getDevice()
+    {
+        $orgId = Auth::user()->organization_id;
+        $device = $this->deviceRepository->findByOrganization($orgId);
+
+        return (new DeviceResponse())->show($device);
+    }
+
+    public function saveDevice(Request $request)
+    {
+        $validated = $request->validate([
+            'ip'   => ['required', 'ip'],
+            'port' => ['required', 'integer', 'min:1', 'max:65535'],
+            'name' => ['nullable', 'string', 'max:255'],
+        ]);
+
+        $orgId = Auth::user()->organization_id;
+        $device = $this->deviceRepository->updateOrCreate($orgId, $validated);
+
+        return (new DeviceResponse())->show($device);
+    }
+
+
+    public function syncNow()
+    {
+        $orgId = Auth::user()->organization_id;
+        $device = $this->deviceRepository->findActiveByOrganization($orgId);
+
+        if (!$device) {
+            return $this->errorResponse('No active device configured.', 422);
+        }
+
+        \App\Jobs\SyncZktecoDeviceJob::dispatch($device);
+
+        return $this->successResponse('Sync started. This may take a moment.');
+    }
+
+}
