@@ -13,4 +13,15 @@ class ZktecoUser extends Model
     {
         return $this->hasMany(Attendance::class, 'employee_id');
     }
+
+        // ZktecoUser.php
+    public function organization()
+    {
+        return $this->belongsTo(Organization::class);
+    }
+
+    public function user()
+    {
+        return $this->hasOne(User::class, 'zkteco_user_id');
+    }
 }

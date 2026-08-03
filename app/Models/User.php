@@ -32,6 +32,7 @@ class User extends Authenticatable
             'password',
             'phone',
             'image',
+            'zkteco_user_id',
         ];
 
         //$hidden tells Laravel: "Never show these columns when converting the model to JSON or an API response."
@@ -55,6 +56,19 @@ class User extends Authenticatable
     public function organization(): BelongsTo
     {
         return $this->belongsTo(Organization::class);
+    }
+
+    // User.php
+    public function zktecoUser()
+    {
+        return $this->belongsTo(ZktecoUser::class, 'zkteco_user_id');         //zktecoUser() is a Many-to-One------user belongs to a single biometric ZKTeco record using the zkteco_user_id column.
+    }
+
+    // convenience — go straight from User to their attendance
+    public function attendances()
+    {
+        //A User doesn't have an attendance column directly attached to them. Instead, this helper method jumps through their linked zktecoUser to fetch many Attendance records. If they aren't linked to a ZKTeco profile yet, it safely returns an empty result instead of crashing.
+        return $this->zktecoUser?->attendances() ?? Attendance::whereRaw('1=0'); // no-op query if unlinked
     }
 
 }
