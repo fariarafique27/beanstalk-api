@@ -41,6 +41,20 @@ class DeviceService extends BaseService
         return (new DeviceResponse())->show($device);
     }
 
+    // public function syncNow()
+    // {
+    //     $orgId = Auth::user()->organization_id;
+    //     $device = $this->deviceRepository->findActiveByOrganization($orgId);
+
+    //     if (!$device) {
+    //         return $this->errorResponse('No active device configured.', 422);
+    //     }
+
+    //     \App\Jobs\SyncZktecoDeviceJob::dispatch($device);
+
+    //     return $this->successResponse(null, 'Sync started. This may take a moment.');
+    // }
+
     public function syncNow()
     {
         $orgId = Auth::user()->organization_id;
@@ -50,9 +64,18 @@ class DeviceService extends BaseService
             return $this->errorResponse('No active device configured.', 422);
         }
 
-        \App\Jobs\SyncZktecoDeviceJob::dispatch($device);
+        // dispatchSync() runs the job immediately in this request instead
+        // of queuing it -- so a bad IP/unreachable device throws here and
+        // now, where we can actually catch it and tell the frontend,
+        // rather than failing silently in a background worker later.
+        try {
+            \App\Jobs\SyncZktecoDeviceJob::dispatchSync($device);
+        } catch (\Throwable $e) {
+            report($e);
+            return $this->errorResponse('Sync failed: ' . $e->getMessage(), 500);
+        }
 
-        return $this->successResponse(null, 'Sync started. This may take a moment.');
+        return $this->successResponse(null, 'Sync completed successfully.');
     }
 
 }
