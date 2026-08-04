@@ -8,6 +8,7 @@
     use Spatie\Permission\Models\Permission;
     use App\Http\Controllers\Api\DashboardController;
     use App\Http\Controllers\Api\AttendanceController;
+    use App\Http\Controllers\Api\DeviceController;
 
     // Public Auth Routes
     Route::post('/login', [AuthController::class, 'login']);
@@ -59,9 +60,12 @@ Route::get('/super-admin/dashboard', function (\Illuminate\Http\Request $request
              Route::post('/org-admins/invite', [OrgAdminController::class, 'storeOrgAdmin']);
         // });
 
-        Route::get('/device', [DeviceController::class, 'show']);
-        Route::post('/device', [DeviceController::class, 'store']);
-        Route::post('/device/sync', [DeviceController::class, 'sync']);
+        // routes/api.php
+        //Route::middleware('permission:device.manage')->group(function () {
+            Route::get('/device', [DeviceController::class, 'show']);
+            Route::post('/device', [DeviceController::class, 'store']);
+            Route::post('/device/sync', [DeviceController::class, 'sync']);
+        // });
 
         // Employee Management Routes (Permission Protected)
         Route::middleware('permission:employees.manage')->group(function () {

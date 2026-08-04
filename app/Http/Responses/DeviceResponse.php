@@ -6,15 +6,19 @@ class DeviceResponse extends BaseResponse
     public function show($device)
     {
         if (!$device) {
-            return $this->successResponse([], 'No device configured yet.');
+            return $this->successResponse('No device configured yet.', []);
         }
 
-        return $this->successResponse([
+        return $this->successResponse('Success', [
             'ip'             => $device->ip,
             'port'           => $device->port,
             'name'           => $device->name,
             'is_active'      => $device->is_active,
             'last_synced_at' => $device->last_synced_at?->diffForHumans(),
+            // Never send the actual password to the frontend — just
+            // whether one is set, so the form can show a masked
+            // placeholder instead of leaving it looking empty/unset.
+            'has_password'   => !empty($device->password),
         ]);
     }
 }

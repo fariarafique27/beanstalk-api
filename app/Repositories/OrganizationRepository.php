@@ -10,10 +10,6 @@ use Illuminate\Support\Facades\Hash;
 
 class OrganizationRepository extends BaseRepository
 {
-    // public function getAllOrganizations()
-    // {
-    //     return Organization::with(['permissions', 'users'])->get();
-    // }
 
     public function getAllOrganizations()
     {

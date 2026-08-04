@@ -1,8 +1,9 @@
 <?php
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Api;
 
 use App\Services\DeviceService;
 use Illuminate\Http\Request;
+use App\Http\Controllers\Controller;
 
 class DeviceController extends Controller
 {

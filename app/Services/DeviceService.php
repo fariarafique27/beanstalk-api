@@ -22,17 +22,24 @@ class DeviceService extends BaseService
     public function saveDevice(Request $request)
     {
         $validated = $request->validate([
-            'ip'   => ['required', 'ip'],
-            'port' => ['required', 'integer', 'min:1', 'max:65535'],
-            'name' => ['nullable', 'string', 'max:255'],
+            'ip'       => ['required', 'ip'],
+            'port'     => ['required', 'integer', 'min:1', 'max:65535'],
+            'name'     => ['nullable', 'string', 'max:255'],
+            'password' => ['nullable', 'string', 'max:255'],
         ]);
 
         $orgId = Auth::user()->organization_id;
+
+        // A blank password field means "don't change it" — never let an
+        // empty submit wipe out a password that's already saved.
+        if (!array_key_exists('password', $validated) || $validated['password'] === '') {
+            unset($validated['password']);
+        }
+
         $device = $this->deviceRepository->updateOrCreate($orgId, $validated);
 
         return (new DeviceResponse())->show($device);
     }
-
 
     public function syncNow()
     {
@@ -45,7 +52,7 @@ class DeviceService extends BaseService
 
         \App\Jobs\SyncZktecoDeviceJob::dispatch($device);
 
-        return $this->successResponse('Sync started. This may take a moment.');
+        return $this->successResponse(null, 'Sync started. This may take a moment.');
     }
 
 }

@@ -31,6 +31,7 @@ class RoleAndUserSeeder extends Seeder
             'attendances.create',
             'attendances.update',
             'attendances.delete',
+            'device.manage',
         ];
 
        // firstOrCreate → Look for a record. If it doesn't exist, create it.
@@ -40,6 +41,7 @@ class RoleAndUserSeeder extends Seeder
         }
 
         $superAdminRole = Role::firstOrCreate(['name' => 'Super Admin']);
+        $orgAdminRole = Role::firstOrCreate(['name' => 'Org Admin']);
 
        // Permission::all() ----> Fetch all rows from the permissions table
        //syncPermissions()----> belongs to the Spatie package , Make this role have exactly these permissions. 

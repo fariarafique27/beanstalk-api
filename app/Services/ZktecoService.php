@@ -2,10 +2,6 @@
 
 namespace App\Services;
 
-use Rats\Zkteco\Lib\ZKTeco;
-
-namespace App\Services;
-
 use ZkTeco\TCP\Device;
 
 class ZktecoService
@@ -55,6 +51,11 @@ class ZktecoService
     }
 }
 
+// Older implementation using Rats\Zkteco\Lib\ZKTeco — kept for reference,
+// not currently in use.
+//
+// use Rats\Zkteco\Lib\ZKTeco;
+//
 // class ZktecoService
 // {
 //     protected string $ip;
