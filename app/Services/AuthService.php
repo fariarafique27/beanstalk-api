@@ -17,62 +17,43 @@ class AuthService extends BaseService
         $this->authRepository = $authRepository;
     }
     
+     //use
     public function login($request)
     {
-        logger('LOGIN METHOD REACHED!', ['email' => $request->email]);
 
         $loginUserResponse = $this->authRepository->fetchUser($request);
 
         if (! $loginUserResponse) {
-            logger('LOGIN ERROR 1: User not found');
             return $this->errorResponse($this->getMessageData('error', 'en')['invalid_error'], 401);
         }
 
         if ($loginUserResponse->password == null) {
-            logger('LOGIN ERROR 2: Password is null');
             return $this->errorResponse($this->getMessageData('error', 'en')['password_not_set_contact_admin'], 401);
         }
 
         if (! $loginUserResponse->is_root) {
             if ($loginUserResponse->organization && $loginUserResponse->organization->trashed()) {
-                logger('LOGIN ERROR 3: Organization trashed');
                 return $this->errorResponse($this->getMessageData('error', 'en')['organization_deleted'], 403);
             }
 
-            if ($loginUserResponse->organization && (int) $loginUserResponse->organization->status === 0) {
-                logger('LOGIN ERROR 4: Organization inactive');
-                return $this->errorResponse($this->getMessageData('error', 'en')['organization_inactive'], 403);
-            }
-
-            if ($loginUserResponse->employee) {
-                if ((int) ($loginUserResponse->employee->status ?? 0) !== 1) {
-                    logger('LOGIN ERROR 5: Employee inactive'); // <-- Check if this logs!
-                    return $this->errorResponse($this->getMessageData('error', 'en')['employee_account_inactive_con_admin'], 403);
-                }
-            }
         }
 
         if (! Hash::check($request->password, $loginUserResponse->password)) {
-            logger('LOGIN ERROR 6: Hash check failed');
             return $this->errorResponse($this->getMessageData('error', 'en')['invalid_error'], 401);
         }
 
-        $index_name = OrganizationIndex::where('organization_id', $loginUserResponse->organization?->id)->value('index_name');
-        $chatbot_status = OrganizationIndex::where('organization_id', $loginUserResponse->organization?->id)->value('is_active');
+       // $index_name = OrganizationIndex::where('organization_id', $loginUserResponse->organization?->id)->value('index_name');
+      //  $chatbot_status = OrganizationIndex::where('organization_id', $loginUserResponse->organization?->id)->value('is_active');
 
         // Revoke all existing tokens to logout from other locations
         $loginUserResponse->tokens()->delete();
 
         $token = $loginUserResponse->createToken('Hrms')->plainTextToken;
 
-        // Revoke decrypt token if present
-        $decryptionTokenKey = $loginUserResponse->cache_key;
+        $permissions = $this->authRepository->getUserPermissions($loginUserResponse);
 
-        if ($decryptionTokenKey) {
-            app(\App\Services\SalaryEncryptionService::class)->revokeDecryptToken($decryptionTokenKey, $loginUserResponse->id);
-        }
 
-        return (new ResponseUser($loginUserResponse))->prepareUserResponse($loginUserResponse, $token, $index_name, $chatbot_status);
+        return (new ResponseUser($loginUserResponse))->prepareUserResponse($loginUserResponse, $token ,  $permissions  );
     }
 
     public function register($request)

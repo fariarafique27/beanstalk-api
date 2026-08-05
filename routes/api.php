@@ -19,30 +19,14 @@
         'success' => true,
         'data' => Permission::all() // Returns all your 6-7 permissions from the database
             ]);
-        });
+    });
         
     // Protected Routes (Require Token)
     Route::middleware('auth:sanctum')->group(function () {
 
-        // Super Admin Dashboard (with your custom permission check)
-        // Route::get('/super-admin/dashboard', [DashboardController::class, 'getSuperAdminDashboard'])
-        //     ->middleware('permission:organization.read');
-Route::get('/super-admin/dashboard', function (\Illuminate\Http\Request $request) {
-    logger('GUARD CHECK DEBUG:', [
-        'guard_name' => $request->user()?->guard_name,
-        'can_read' => $request->user()?->can('organization.read'),
-        'has_direct_permission' => $request->user()?->hasPermissionTo('organization.read'),
-    ]);
-    
-    // Resolve via app container so constructor injection works automatically:
-    return app(DashboardController::class)->getSuperAdminDashboard();
-});
-
-        // Regular Company / Tenant Dashboard
-        Route::get('/dashboard', [DashboardController::class, 'getDashboard']);
-
-        Route::get('/me', [AuthController::class, 'me']);
-        Route::post('/logout', [AuthController::class, 'logout']);
+        //1-Dashboard Routes
+        Route::get('/super-admin/dashboard', [DashboardController::class, 'getSuperAdminDashboard']);               // Super Admin Dashboard (with your custom permission check)
+        Route::get('/dashboard', [DashboardController::class, 'getDashboard']);                                      // Regular Company / Tenant Dashboard
 
         // Organization Management Routes
         Route::get('/organizations', [OrgAdminController::class, 'index']); // <-- ADDED THIS
@@ -72,4 +56,8 @@ Route::get('/super-admin/dashboard', function (\Illuminate\Http\Request $request
             Route::get('/employees', [EmployeeController::class, 'index']);
             Route::post('/employees', [EmployeeController::class, 'store']);
         });
+
+        //Auth routes 
+        Route::get('/me', [AuthController::class, 'me']);
+        Route::post('/logout', [AuthController::class, 'logout']);
     });

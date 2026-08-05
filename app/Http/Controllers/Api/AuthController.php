@@ -10,13 +10,16 @@ use Illuminate\Http\Request;
 
 class AuthController extends Controller
 {
-    public function __construct(
-        protected AuthService $authService
-    ) {}
+    protected $authService;
 
+    public function __construct(AuthService $authService)
+    {
+        $this->authService = $authService;
+    }
+
+     //use
     public function login(LoginUserRequest $request)
     {
-        logger('CONTROLLER LOGIN HIT!', $request->all());
         try {
             return $this->authService->login($request);
         } catch (\Exception $e) {

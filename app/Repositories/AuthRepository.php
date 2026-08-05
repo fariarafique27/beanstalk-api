@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use App\Repositories\BaseRepository;
+use App\Models\OrganizationPermission;
 
 class AuthRepository extends BaseRepository
 {
@@ -29,12 +30,30 @@ class AuthRepository extends BaseRepository
         return $user;
     }
 
-    public function fetchUser($request)
+    //use
+    public function fetchUser($request)                             
     {
-        return User::where('email', $request->email)->with(['organization' => function ($query) {
+        return User::where('email', $request->email)->with(['organization' => function ($query) {                //// Find user by request email and include their organization (even if deleted)    
             $query->withTrashed();
         }])->first();
     }
+
+    //use 
+    public function getUserPermissions($user): array
+    {
+        $orgPermissions = [];
+
+        if ($user->organization_id) {
+            $orgPermissions = OrganizationPermission::where('organization_id', $user->organization_id)
+                ->pluck('module_key')
+                ->toArray();
+        }
+
+        $spatiePermissions = $user->getAllPermissions()->pluck('name')->toArray();
+
+        return array_values(array_unique(array_merge($spatiePermissions, $orgPermissions)));
+    }
+
 
     public function logout($request)
     {
