@@ -41,6 +41,7 @@ abstract class Controller
             'invalid_error' => 'Invalid credentials provided.',
             'logout_success' => 'Logged out successfully.',
             'fetch_success' => 'Data retrieved successfully.',
+            
         ];
     }
 }

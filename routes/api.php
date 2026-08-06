@@ -9,6 +9,7 @@
     use App\Http\Controllers\Api\DashboardController;
     use App\Http\Controllers\Api\AttendanceController;
     use App\Http\Controllers\Api\DeviceController;
+    use App\Http\Controllers\Api\UserController;
 
     // Public Auth Routes
     Route::post('/login', [AuthController::class, 'login']);
@@ -57,6 +58,16 @@
             Route::get('/employees', [EmployeeController::class, 'index']);
             Route::post('/employees', [EmployeeController::class, 'store']);
         });
+        
+
+        //USER MANAGEMENT ROUTES 
+        Route::post('/users', [UserController::class, 'store'])->name('users.store');
+        //TODO 
+        // Route::get('/users', [UserController::class, 'index'])->name('users.index');
+        // Route::get('/users/{id}', [UserController::class, 'show'])->name('users.show');
+        // Route::put('/users/{id}', [UserController::class, 'update'])->name('users.update');
+        // Route::delete('/users/{id}', [UserController::class, 'destroy'])->name('users.destroy');
+
 
         //Auth routes 
         Route::get('/me', [AuthController::class, 'me']);

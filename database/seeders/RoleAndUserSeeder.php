@@ -42,6 +42,7 @@ class RoleAndUserSeeder extends Seeder
 
         $superAdminRole = Role::firstOrCreate(['name' => 'Super Admin']);
         $orgAdminRole = Role::firstOrCreate(['name' => 'Org Admin']);
+        $employeeRole = Role::firstOrCreate(['name' => 'employee']);
 
        // Permission::all() ----> Fetch all rows from the permissions table
        //syncPermissions()----> belongs to the Spatie package , Make this role have exactly these permissions. 
