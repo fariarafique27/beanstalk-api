@@ -29,20 +29,21 @@
         Route::get('/dashboard', [DashboardController::class, 'getDashboard']);                                      // Regular Company / Tenant Dashboard
 
         // Organization Management Routes
-        Route::get('/organizations', [OrgAdminController::class, 'index']); // <-- ADDED THIS
-        Route::put('/organizations/{id}', [OrgAdminController::class, 'updateOrgAdmin']); // <-- ADDED THIS
-        Route::delete('/organizations/{id}', [OrgAdminController::class, 'destroyOrgAdmin']); // <-- ADDED THIS
-        Route::post('/organizations/{id}/resend-invite', [OrgAdminController::class, 'resendInvite']); // <-- ADDED THIS
+        Route::get('/organizations', [OrgAdminController::class, 'index']); 
+        Route::put('/organizations/{id}', [OrgAdminController::class, 'updateOrgAdmin']); 
+        Route::delete('/organizations/{id}', [OrgAdminController::class, 'destroyOrgAdmin']);
+        Route::post('/organizations/{id}/resend-invite', [OrgAdminController::class, 'resendInvite']); 
+                //TODO ::::
+        // Organization & Admin Invitation Route (Protected by permission)
+        // Route::middleware('permission:org-admins.invite')->group(function () {
+             Route::post('/org-admins/invite', [OrgAdminController::class, 'storeOrgAdmin']);
+        // });
 
 
         Route::get('/attendances', [AttendanceController::class, 'index']);
         Route::get('/attendances/{id}', [AttendanceController::class, 'show']);
         
-        //TODO ::::
-        // Organization & Admin Invitation Route (Protected by permission)
-        // Route::middleware('permission:org-admins.invite')->group(function () {
-             Route::post('/org-admins/invite', [OrgAdminController::class, 'storeOrgAdmin']);
-        // });
+
 
         // routes/api.php
         //Route::middleware('permission:device.manage')->group(function () {

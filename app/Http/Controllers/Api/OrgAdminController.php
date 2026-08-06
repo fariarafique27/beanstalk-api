@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
-use App\Services\AuthService;
+use App\Services\OrgAdminService;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 use App\Models\Organization;
@@ -19,15 +19,15 @@ use App\Repositories\OrganizationRepository;
 class OrgAdminController extends Controller
 {
 
-protected $authService;
-protected $organizationRepository;
+    protected $orgAdminService;
+    protected $organizationRepository;
 
-public function __construct(AuthService $authService, OrganizationRepository $organizationRepository)
-{
-    $this->authService = $authService;
-    $this->organizationRepository = $organizationRepository;
-}
-
+    public function __construct(OrgAdminService $orgAdminService , OrganizationRepository $organizationRepository )
+    {
+        $this->orgAdminService = $orgAdminService;
+        //eventually remove this 
+        $this->organizationRepository = $organizationRepository;
+    }
 
 
     // public function storeOrgAdmin(Request $request)
@@ -144,33 +144,44 @@ public function __construct(AuthService $authService, OrganizationRepository $or
 
 
     // API Endpoint: Return list of organizations and stats
-public function index()
+    // public function index()
+    // {
+    //     logger('index of org method hitttttttttttt ');
+    //     // Fetch users/organizations safely without hardcoding missing columns
+    //     $organizations = User::all()->map(function ($user) {
+    //         return [
+    //             'id' => $user->id,
+    //             'org_name' => $user->org_name ?? $user->name, // Fallback if column name differs
+    //             'admin_name' => $user->name,
+    //             'admin_email' => $user->email,
+    //             'status' => $user->status ?? 'active', // Safe fallback if column doesn't exist yet
+    //             'permissions' => $user->permissions ?? ['Standard'],
+    //         ];
+    //     });
+
+    //     $stats = [
+    //         'total_orgs' => $organizations->count(),
+    //         'active_admins' => collect($organizations)->where('status', 'active')->count(),
+    //         'pending_invites' => collect($organizations)->where('status', '!=', 'active')->count(),
+    //     ];
+
+    //     return response()->json([
+    //         'success' => true,
+    //         'data' => [
+    //             'organizations' => $organizations,
+    //             'stats' => $stats
+    //         ]
+    //     ], 200);
+    // }
+
+    public function index()
     {
-        // Fetch users/organizations safely without hardcoding missing columns
-        $organizations = User::all()->map(function ($user) {
-            return [
-                'id' => $user->id,
-                'org_name' => $user->org_name ?? $user->name, // Fallback if column name differs
-                'admin_name' => $user->name,
-                'admin_email' => $user->email,
-                'status' => $user->status ?? 'active', // Safe fallback if column doesn't exist yet
-                'permissions' => $user->permissions ?? ['Standard'],
-            ];
-        });
-
-        $stats = [
-            'total_orgs' => $organizations->count(),
-            'active_admins' => collect($organizations)->where('status', 'active')->count(),
-            'pending_invites' => collect($organizations)->where('status', '!=', 'active')->count(),
-        ];
-
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'organizations' => $organizations,
-                'stats' => $stats
-            ]
-        ], 200);
+        try {
+            return $this->orgAdminService->index();
+        } catch (\Exception $e) {
+            $this->storeException($e);
+            return $this->errorResponse($this->getMessageData('error', 'en')['general_error'], 500);
+        }
     }
 
 }
