@@ -71,9 +71,10 @@ class SyncZktecoDeviceJob implements ShouldQueue
         $orgId = $this->device->organization_id;
         $oneWeekAgo = Carbon::now()->subWeek()->startOfDay();
 
-        // scoped to THIS org only — the key multi-tenant fix
+        // Scoped to THIS org only
         $zkUsers = ZktecoUser::where('organization_id', $orgId)->get()->keyBy('uid');
 
+        // 1. Filter out invalid, unrecognized, or old records first
         $validEntries = [];
 
         foreach ($entries as $entry) {
@@ -100,30 +101,42 @@ class SyncZktecoDeviceJob implements ShouldQueue
             ];
         }
 
+        // 2. Sort all entries strictly by timestamp chronologically (Oldest to Newest)
         usort($validEntries, fn ($a, $b) => $a['timestamp']->greaterThan($b['timestamp']) ? 1 : -1);
+
+        // 3. Group and sequence entries per user per day to enforce alternating In/Out
+        $userDailyPunchCounts = [];
 
         foreach ($validEntries as $item) {
             $zkUser = $item['zkUser'];
             $date = $item['date'];
             $timestamp = $item['timestamp'];
 
-            // DB-based open-session check (not in-memory counting — the fix we discussed)
-            $attendance = Attendance::firstOrCreate(
-                ['employee_id' => $zkUser->id, 'attendance_date' => $date],
-                ['organization_id' => $orgId, 'status' => 'Present', 'user_name' => $zkUser->name]
-            );
+            if (!isset($userDailyPunchCounts[$zkUser->id][$date])) {
+                $userDailyPunchCounts[$zkUser->id][$date] = 0;
+            }
+            $userDailyPunchCounts[$zkUser->id][$date]++;
 
-            $openLog = AttendanceLog::where('attendance_id', $attendance->id)
-                ->whereNull('check_out_time')
-                ->first();
+            $sequenceNumber = $userDailyPunchCounts[$zkUser->id][$date];
+
+            // Odd sequence (1, 3, 5...) = Check-In, Even sequence (2, 4, 6...) = Check-Out
+            $isCheckIn = ($sequenceNumber % 2 !== 0);
 
             try {
-                DB::transaction(function () use ($attendance, $zkUser, $timestamp, $openLog) {
-                    if (!$openLog) {
-                        $exists = AttendanceLog::where('attendance_id', $attendance->id)
+                DB::transaction(function () use ($zkUser, $date, $timestamp, $isCheckIn, $orgId) {
+                    $attendance = Attendance::firstOrCreate(
+                        ['employee_id' => $zkUser->id, 'attendance_date' => $date],
+                        ['organization_id' => $orgId, 'status' => 'Present', 'user_name' => $zkUser->name]
+                    );
+
+                    if ($isCheckIn) {
+                        $exists = AttendanceLog::where('zkteco_user_id', $zkUser->id)
                             ->where('check_in_time', $timestamp)
                             ->exists();
-                        if ($exists) return;
+
+                        if ($exists) {
+                            return;
+                        }
 
                         AttendanceLog::create([
                             'attendance_id' => $attendance->id,
@@ -132,12 +145,17 @@ class SyncZktecoDeviceJob implements ShouldQueue
                             'check_in_punch_state' => 'Check In at ' . $timestamp->format('h:i A'),
                         ]);
                     } else {
-                        $exists = AttendanceLog::where('id', $openLog->id)
+                        $exists = AttendanceLog::where('zkteco_user_id', $zkUser->id)
                             ->where('check_out_time', $timestamp)
                             ->exists();
-                        if ($exists) return;
 
-                        $openLog->update([
+                        if ($exists) {
+                            return;
+                        }
+
+                        AttendanceLog::create([
+                            'attendance_id' => $attendance->id,
+                            'zkteco_user_id' => $zkUser->id,
                             'check_out_time' => $timestamp,
                             'check_out_punch_state' => 'Check Out at ' . $timestamp->format('h:i A'),
                         ]);
